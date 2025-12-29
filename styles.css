@@ -1,3 +1,28 @@
-body {
-    background-color: black;
+
+
+#gameContainer {
+    display: grid;
+    justify-self: center;
+    grid-template-columns: repeat(15, 40px);
+    grid-template-rows: repeat(15, 40px);
+    place-items: center;
+    border-color: black;
+    border-width: 2px;
+    border-style: solid;
+    width: 600px;
+    height: 600px;
+    margin: 0 auto;
+}
+
+.row {
+    border-color: gray;
+    border-width: 1px;
+    border-style: solid;
+    width: 40px;
+    height: 38px;
+}
+
+.column {
+    width: 40px;
+    height: 40px;
 }
