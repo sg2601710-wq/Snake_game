@@ -1,19 +1,40 @@
 const container = document.querySelector('#gameContainer');
+
 const scoreDisplay = document.querySelector('#score');
 const highScoreDisplay = document.querySelector('#highScore');
+
 const restartButton = document.querySelector('#restartButton');
-const snake = document.createElement('div');
-var snakePosition = { x: 7, y: 7 };
-snake.id = 'snake';
-snake.style.backgroundColor = 'green';
-snake.style.width = '40px';
-snake.style.height = '40px';
+
+const head = document.createElement('div');
+const snakeBody = [];
+let snakePosition = { x: 7, y: 7 };
+head.className = 'snake';
+head.style.backgroundColor = 'green';
+head.style.width = '40px';
+head.style.height = '40px';
+
 const food = document.createElement('div');
-var foodPosition = { x: 0, y: 0 };
+let foodPosition = { x: 0, y: 0 };
 food.id = 'food';
 food.style.backgroundColor = 'red';
 food.style.width = '40px';
 food.style.height = '40px';
+
+let started = false;
+let currentInterval;
+let foodEaten = false;
+let direction = null;
+
+let score = 0;
+let highScore = localStorage.getItem('highScore');
+
+if (highScore === null) {
+    highScore = 0;
+} else {
+    highScore = Number(highScore);
+}
+
+highScoreDisplay.textContent = 'High score: ' + highScore;
 
 
 for (let i = 0; i < 15; i++) {
@@ -31,81 +52,101 @@ for (let i = 0; i < 15; i++) {
     } 
 }
 
-document.querySelector(`#col${snakePosition.x}row${snakePosition.y}`).appendChild(snake);
+document.querySelector(`#col${snakePosition.x}row${snakePosition.y}`).appendChild(head);
 
-function moveUp() {
-    if (snakePosition.y === 0) {
-        snakePosition.y = 15;
-    };
-    snakePosition.y--;
-    renderSnake();
-    checkFood();
-}
+function renderSnake() {
 
-function moveDown() {
-    if (snakePosition.y === 14) {
-        snakePosition.y = -1;
-    };
-    snakePosition.y++;
-    renderSnake();
-    checkFood();
-}
+    head.remove();
+    
+    document.querySelectorAll('.bodyPart').forEach(part => part.remove());
 
-function moveLeft() {
-    if (snakePosition.x === 0) {
-        snakePosition.x = 15;
-    };
-    snakePosition.x--;
-    renderSnake();
-    checkFood();
-}
+    document.querySelector(`#col${snakePosition.x}row${snakePosition.y}`).appendChild(head);
 
-function moveRight() {
-    if (snakePosition.x === 14) {
-        snakePosition.x = -1;
-    };
-    snakePosition.x++;
-    renderSnake();
-    checkFood();
+    for (let part of snakeBody) {
+        const bodyPart = document.createElement('div');
+        bodyPart.className = 'bodyPart';
+        bodyPart.style.width = '40px';
+        bodyPart.style.height = '40px';
+        bodyPart.style.backgroundColor = 'lightgreen';
+
+        document.querySelector(`#col${part.x}row${part.y}`).appendChild(bodyPart);
+    }
 }
 
 function spawnFood() {
     foodPosition.x = Math.floor(Math.random() * 15);
     foodPosition.y = Math.floor(Math.random() * 15);
+
+    if (foodPosition === snakePosition || snakeBody.some(part => part.x === foodPosition.x && part.y === foodPosition.y)) {
+        spawnFood();
+        return;
+    }
+
     food.remove();
     document.querySelector(`#col${foodPosition.x}row${foodPosition.y}`).appendChild(food);
 }
 
 function checkFood() {
     if (snakePosition.x === foodPosition.x && snakePosition.y === foodPosition.y) {
+        foodEaten = true;
+        score += 1;
+        scoreDisplay.textContent = 'Score: ' + score;
+        if (score > highScore) {
+            highScore = score;
+            highScoreDisplay.textContent = 'High score: ' + highScore;
+        }
         spawnFood();
     }
 }
 
-function renderSnake() {
-    snake.remove();
-    document.querySelector(`#col${snakePosition.x}row${snakePosition.y}`).appendChild(snake);
+function move(dx, dy) {
+    snakeBody.unshift({ x: snakePosition.x, y: snakePosition.y });
+    snakePosition.x += dx;
+    snakePosition.y += dy;
+
+    if (snakePosition.x < 0) snakePosition.x = 14;
+    if (snakePosition.x > 14) snakePosition.x = 0;
+    if (snakePosition.y < 0) snakePosition.y = 14;
+    if (snakePosition.y > 14) snakePosition.y = 0;
+
+    checkFood();
+
+    if (!foodEaten) {
+        snakeBody.pop();
+    } else {
+        foodEaten = false;
+    }
+
+    if (snakeBody.some(part => part.x === snakePosition.x && part.y === snakePosition.y)) {
+        clearInterval(currentInterval);
+        highScore = Math.max(highScore, score);
+        localStorage.setItem('highScore', highScore);
+
+        alert('Game Over! Your score: ' + score);
+        location.reload();
+
+    }
+    renderSnake();
 }
 
 function gameLoop() {
     switch (direction) {
-        case 'up': moveUp(); break;
-        case 'down': moveDown(); break;
-        case 'left': moveLeft(); break;
-        case 'right': moveRight(); break;
+        case 'up': move(0, -1); break;
+        case 'down': move(0, 1); break;
+        case 'left': move(-1, 0); break;
+        case 'right': move(1, 0); break;
     }
 }
 
-let started = false;
-let currentInterval;
-let foodEaten = false;
+
 
 document.addEventListener('keydown', function(event) {
     if (!started) {
         started = true;
-        currentInterval = setInterval(gameLoop, 400);
-        renderSnake();
         spawnFood();
+        renderSnake();
+        currentInterval = setInterval(gameLoop, 200);
+
     }
 
     switch(event.key) {
