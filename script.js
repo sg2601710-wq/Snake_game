@@ -126,6 +126,15 @@ function move(dx, dy) {
         location.reload();
 
     }
+
+    if (snakeBody.length >= 225) {
+        clearInterval(currentInterval);
+        highScore = Math.max(highScore, score);
+        localStorage.setItem('highScore', highScore);
+
+        alert('Congratulations! You win! Your score: ' + score);
+        location.reload();
+    }
     renderSnake();
 }
 
